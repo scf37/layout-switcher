@@ -1,12 +1,12 @@
-== Prerequisites ==
+## Prerequisites
 
 Requres pynput python lib to be installed
 
 Run: pip install --user pynput
 
-== Components ==
+## Components
 
-=== xkb-switch ===
+### xkb-switch
 
 C++ application allowing to switch Keyboard Layout in Ubuntu Linux
 Compiled form GitHub repo https://github.com/ierton/xkb-switch
@@ -14,7 +14,7 @@ All credits goes to J. Bromley, S. Mironov, Alexei Rad'kov
 
 Run 'LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH; xkb-switch -h' for additional info
 
-=== layout_switcher.py ===
+### layout_switcher.py
 
 Simple python script waiting for Ctrl+Shift key combination to be pressed and then released on the keyboard.
 Specific combination can be changed by editing 'key_combinations' list inside layout_switcher.py
@@ -22,11 +22,11 @@ Scripts receive 2 sh commands as command line arguments and execute them one aft
 
 Created based on this guide https://nitratine.net/blog/post/how-to-make-hotkeys-in-python/
 
-=== layout_switcher.sh ===
+### layout_switcher.sh
 
 Simple bash script which joins all parts together and make it work.
 
-== Usage == 
+## Usage
 
 Put layout_switcher.py and xkb-switch in same folder
 Run: LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH; xkb-switch -l
@@ -43,7 +43,7 @@ Note: If you have layouts different from us/ru, layout_switcher.sh need to be ed
 
 Script layout_switcher.sh can be added to /etc/profile to start on system boot.
 
-== Test ==
+## Test
 
-Only tested with Python 2.7.15rc1
-Only tested in Linux Mint 19.1 Cinnamon. Most likely going to work on Ubuntu.
+Tested with Python 2.7.15rc1, 2.7.17
+Tested in Linux Mint 19.1 Cinnamon, Ubuntu 18.0.4
