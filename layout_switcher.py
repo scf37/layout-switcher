@@ -57,7 +57,7 @@ def on_release(key):
     if any([key in combo for combo in key_combinations]):
             if key in current:
                 current.remove(key)
-            if len(current) == 0 and execute_cmd:
+            if len(current) == 1 and execute_cmd:
                 execute()
                 execute_cmd = False
 
