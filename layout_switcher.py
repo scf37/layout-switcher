@@ -48,7 +48,6 @@ def on_press(key):
         if any(all(k in current for k in combo) for combo in key_combinations):
             execute_cmd = True
     else:
-        current.clear()
         execute_cmd = False
 
 def on_release(key):
