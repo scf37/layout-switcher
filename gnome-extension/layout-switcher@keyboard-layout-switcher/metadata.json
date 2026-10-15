@@ -1,0 +1,7 @@
+{
+  "uuid": "layout-switcher@keyboard-layout-switcher",
+  "name": "Layout Switcher D-Bus",
+  "description": "Exposes org.gnome.Shell.Extensions.LayoutSwitcher on D-Bus to switch keyboard input sources programmatically (used by layout_switcher.py on Wayland).",
+  "shell-version": ["45", "46", "47", "48", "49", "50"],
+  "url": "https://github.com/"
+}

@@ -1,13 +1,20 @@
 #!/usr/bin/python3
 
-from pynput import keyboard
 import sys
 import os
+import select
+
+# Backends:
+#  - X11:     pynput (XRecord)
+#  - Wayland: /dev/input via python-evdev (user must be in the 'input' group),
+#             because Wayland gives no application access to global key events.
+wayland = os.environ.get('XDG_SESSION_TYPE') == 'wayland'
 
 # The key combination to check
 # More than one combination of keys can be added here 
+# Keys are normalized to 'shift' / 'ctrl'.
 key_combinations = [
-    {keyboard.Key.shift, keyboard.Key.ctrl}
+    {'shift', 'ctrl'}
 ]
 
 # The currently active modifiers
@@ -60,5 +67,68 @@ def on_release(key):
                 execute()
                 execute_cmd = False
 
-with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-    listener.join()
+def run_pynput():
+    from pynput import keyboard
+
+    def normalize(key):
+        if key in (keyboard.Key.shift, keyboard.Key.shift_l, keyboard.Key.shift_r):
+            return 'shift'
+        if key in (keyboard.Key.ctrl, keyboard.Key.ctrl_l, keyboard.Key.ctrl_r):
+            return 'ctrl'
+        return key
+
+    with keyboard.Listener(on_press=lambda k: on_press(normalize(k)),
+                           on_release=lambda k: on_release(normalize(k))) as listener:
+        listener.join()
+
+def run_evdev():
+    import evdev
+    from evdev import ecodes
+
+    names = {
+        ecodes.KEY_LEFTSHIFT: 'shift', ecodes.KEY_RIGHTSHIFT: 'shift',
+        ecodes.KEY_LEFTCTRL: 'ctrl', ecodes.KEY_RIGHTCTRL: 'ctrl',
+    }
+    held = set()  # physical modifier keycodes currently down
+
+    devices = {}
+    for path in evdev.list_devices():
+        try:
+            dev = evdev.InputDevice(path)
+        except PermissionError:
+            sys.exit("cannot open " + path + ": user must be in the 'input' group")
+        keys = dev.capabilities().get(ecodes.EV_KEY, [])
+        # real keyboards only (has letters), skips mice, power buttons
+        if ecodes.KEY_A in keys and ecodes.KEY_SPACE in keys:
+            devices[dev.fd] = dev
+    if not devices:
+        sys.exit("no keyboard devices found in /dev/input")
+
+    while True:
+        ready, _, _ = select.select(list(devices), [], [])
+        for fd in ready:
+            try:
+                events = list(devices[fd].read())
+            except OSError:  # device unplugged
+                del devices[fd]
+                continue
+            for ev in events:
+                if ev.type != ecodes.EV_KEY or ev.value == 2:  # ignore autorepeat
+                    continue
+                key = names.get(ev.code, ev.code)
+                if ev.value == 1:
+                    held.add(ev.code)
+                    on_press(key)
+                else:
+                    held.discard(ev.code)
+                    # both shifts / both ctrls: only release the logical key when no side is held
+                    if key in ('shift', 'ctrl') and any(names.get(c) == key for c in held):
+                        continue
+                    on_release(key)
+        if not devices:
+            sys.exit("all keyboard devices disappeared")
+
+if wayland:
+    run_evdev()
+else:
+    run_pynput()
